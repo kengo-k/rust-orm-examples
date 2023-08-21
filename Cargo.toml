@@ -1,12 +1,10 @@
 [package]
-name = "rust-simple-template"
+name = "rust-orm-examples"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[[bin]]
-name = "main2"
-path = "src/main2.rs"
-
 [dependencies]
+diesel = { version = "2.1.0", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
+dotenv = "0.15.0"

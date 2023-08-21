@@ -1,0 +1,10 @@
+CREATE TABLE shops (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE sales (
+    id INTEGER PRIMARY KEY,
+    shop_id INTEGER NOT NULL,
+    amount INTEGER NOT NULL
+);

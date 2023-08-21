@@ -1,40 +1,46 @@
-mod foo;
+use diesel::prelude::*;
+use diesel::sqlite::SqliteConnection;
+use dotenv::dotenv;
+use std::env;
 
-mod inner_mod {
-    pub fn hello() {
-        println!("Hello");
-    }
+mod schema;
 
-    pub mod inner_inner_mod {
-        pub fn world() {
-            println!("World");
-        }
-    }
-
-    #[derive(Debug)]
-    pub struct Person {
-        pub name: String,
-    }
-
-    impl Person {
-        pub fn new(name: String) -> Self {
-            Self { name }
-        }
-
-        pub fn show(&self) {
-            println!("{:?}", self);
-        }
-    }
+#[derive(Queryable, Selectable, Debug)]
+#[diesel(table_name = schema::sales)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+pub struct Sale {
+    pub id: Option<i32>,
+    pub shop_id: i32,
+    pub amount: i32,
 }
 
-use crate::foo::common::MyEnum;
-use inner_mod::inner_inner_mod::world;
-use inner_mod::Person;
+#[derive(Insertable)]
+#[diesel(table_name = schema::sales)]
+pub struct NewSale {
+    pub shop_id: i32,
+    pub amount: i32,
+}
+
+pub fn establish_connection() -> SqliteConnection {
+    dotenv().ok();
+
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    SqliteConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+}
+
+pub fn create_post(conn: &mut SqliteConnection, shop_id: i32, amount: i32) -> Sale {
+    let new_post = NewSale { shop_id, amount };
+
+    diesel::insert_into(schema::sales::table)
+        .values(&new_post)
+        .returning(Sale::as_returning())
+        .get_result(conn)
+        .expect("Error saving new post")
+}
 
 fn main() {
-    inner_mod::hello();
-    world();
-    let john = Person::new("John".to_string());
-    john.show();
-    foo::bar::util::print_my_enum(&MyEnum::A);
+    let mut conn = establish_connection();
+    let sale = create_post(&mut conn, 1, 1200);
+    println!("Saved post {:?}", sale);
 }
